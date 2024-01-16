@@ -1,11 +1,14 @@
 from keras.models import Model
-from keras.layers import Input, Add, Activation, Dropout, Flatten, Dense
+from keras.layers import Input, Add, Activation, Dropout, Flatten, Dense, Multiply, Lambda
 from keras.layers.convolutional import Convolution2D, MaxPooling2D, AveragePooling2D
 from keras.layers.normalization import BatchNormalization
 from keras.regularizers import l2
 from keras import backend as K
+import numpy as np
 
 weight_decay = 0.0005
+
+
 
 def initial_conv(input):
     x = Convolution2D(16, (3, 3), padding='same', kernel_initializer='he_normal',
@@ -20,6 +23,10 @@ def initial_conv(input):
 
 
 def expand_conv(init, base, k, strides=(1, 1)):
+    # Define trainable parameters for gamma and velocity
+    gamma = K.variable(value=np.random.rand(1,1), dtype='float32', name='gamma')
+    vel = K.variable(value=np.random.rand(1,1), dtype='float32', name='velocity')
+
     x = Convolution2D(base * k, (3, 3), padding='same', strides=strides, kernel_initializer='he_normal',
                       W_regularizer=l2(weight_decay),
                       use_bias=False)(init)
@@ -37,13 +44,25 @@ def expand_conv(init, base, k, strides=(1, 1)):
                       W_regularizer=l2(weight_decay),
                       use_bias=False)(init)
 
-    m = Add()([x, skip])
+    # Velocity
+    gamma_vel = Multiply()[gamma, vel] # gamma * vel
+    complementary_gamma = Lambda(lambda ele: 1.0 - ele)(gamma) # (1 - gamma)
+    gamma_x = Multiply()([complementary_gamma, x]) # (1 - gamma)f(x)
+
+
+    v = Add()[gamma_vel, gamma_x] # gamma * vel + (1-gamma)f(x)
+
+    m = Add()([v, skip])
 
     return m
 
 
 def conv1_block(input, k=1, dropout=0.0):
     init = input
+
+    # Define trainable parameters for gamma and velocity
+    gamma = K.variable(value=np.random.rand(1,1), dtype='float32', name='gamma')
+    vel = K.variable(value=np.random.rand(1,1), dtype='float32', name='velocity')
 
     channel_axis = 1 if K.image_data_format() == "channels_first" else -1
 
@@ -61,12 +80,23 @@ def conv1_block(input, k=1, dropout=0.0):
                       W_regularizer=l2(weight_decay),
                       use_bias=False)(x)
 
-    m = Add()([init, x])
+    # Velocity
+    gamma_vel = Multiply()[gamma, vel] # gamma * vel
+    complementary_gamma = Lambda(lambda ele: 1.0 - ele)(gamma) # (1 - gamma)
+    gamma_x = Multiply()([complementary_gamma, x]) # (1 - gamma)f(x)
+    v = Add()[gamma_vel, gamma_x] # gamma * vel + (1-gamma)f(x)
+
+    
+    m = Add()([init, v])
     return m
 
 def conv2_block(input, k=1, dropout=0.0):
     init = input
 
+    # Define trainable parameters for gamma and velocity
+    gamma = K.variable(value=np.random.rand(1,1), dtype='float32', name='gamma')
+    vel = K.variable(value=np.random.rand(1,1), dtype='float32', name='velocity')
+
     channel_axis = 1 if K.image_dim_ordering() == "th" else -1
 
     x = BatchNormalization(axis=channel_axis, momentum=0.1, epsilon=1e-5, gamma_initializer='uniform')(input)
@@ -83,12 +113,25 @@ def conv2_block(input, k=1, dropout=0.0):
                       W_regularizer=l2(weight_decay),
                       use_bias=False)(x)
 
-    m = Add()([init, x])
+    # Velocity
+    gamma_vel = Multiply()[gamma, vel] # gamma * vel
+    complementary_gamma = Lambda(lambda ele: 1.0 - ele)(gamma) # (1 - gamma)
+    gamma_x = Multiply()([complementary_gamma, x]) # (1 - gamma)f(x)
+
+
+    v = Add()[gamma_vel, gamma_x] # gamma * vel + (1-gamma)f(x)
+
+    m = Add()([init, v])
+
     return m
 
 def conv3_block(input, k=1, dropout=0.0):
     init = input
 
+    # Define trainable parameters for gamma and velocity
+    gamma = K.variable(value=np.random.rand(1,1), dtype='float32', name='gamma')
+    vel = K.variable(value=np.random.rand(1,1), dtype='float32', name='velocity')
+
     channel_axis = 1 if K.image_dim_ordering() == "th" else -1
 
     x = BatchNormalization(axis=channel_axis, momentum=0.1, epsilon=1e-5, gamma_initializer='uniform')(input)
@@ -105,7 +148,16 @@ def conv3_block(input, k=1, dropout=0.0):
                       W_regularizer=l2(weight_decay),
                       use_bias=False)(x)
 
-    m = Add()([init, x])
+    # Velocity
+    gamma_vel = Multiply()[gamma, vel] # gamma * vel
+    complementary_gamma = Lambda(lambda ele: 1.0 - ele)(gamma) # (1 - gamma)
+    gamma_x = Multiply()([complementary_gamma, x]) # (1 - gamma)f(x)
+
+
+    v = Add()[gamma_vel, gamma_x] # gamma * vel + (1-gamma)f(x)
+
+    m = Add()([init, v])
+
     return m
 
 def create_wide_residual_network(input_dim, nb_classes=100, N=2, k=1, dropout=0.0, verbose=1):
