@@ -24,8 +24,10 @@ def initial_conv(input):
 
 def expand_conv(init, base, k, strides=(1, 1)):
     # Define trainable parameters for gamma and velocity
-    gamma = K.variable(value=np.random.rand(1,1), dtype='float32', name='gamma')
-    vel = K.variable(value=np.random.rand(1,1), dtype='float32', name='velocity')
+    # gamma = K.variable(value=0.9, dtype='float32', name='gamma')
+    # vel = K.variable(value=0.0, dtype='float32', name='velocity')
+    gamma = 0.9
+    vel = 0.0
 
     x = Convolution2D(base * k, (3, 3), padding='same', strides=strides, kernel_initializer='he_normal',
                       W_regularizer=l2(weight_decay),
@@ -61,8 +63,10 @@ def conv1_block(input, k=1, dropout=0.0):
     init = input
 
     # Define trainable parameters for gamma and velocity
-    gamma = K.variable(value=np.random.rand(1,1), dtype='float32', name='gamma')
-    vel = K.variable(value=np.random.rand(1,1), dtype='float32', name='velocity')
+    # gamma = K.variable(value=np.random.rand(1,1), dtype='float32', name='gamma')
+    # vel = K.variable(value=np.random.rand(1,1), dtype='float32', name='velocity')
+    gamma = 0.9
+    vel = 0.0
 
     channel_axis = 1 if K.image_data_format() == "channels_first" else -1
 
@@ -94,8 +98,10 @@ def conv2_block(input, k=1, dropout=0.0):
     init = input
 
     # Define trainable parameters for gamma and velocity
-    gamma = K.variable(value=np.random.rand(1,1), dtype='float32', name='gamma')
-    vel = K.variable(value=np.random.rand(1,1), dtype='float32', name='velocity')
+    # gamma = K.variable(value=np.random.rand(1,1), dtype='float32', name='gamma')
+    # vel = K.variable(value=np.random.rand(1,1), dtype='float32', name='velocity')
+    gamma = 0.9
+    vel = 0.0
 
     channel_axis = 1 if K.image_dim_ordering() == "th" else -1
 
@@ -129,8 +135,10 @@ def conv3_block(input, k=1, dropout=0.0):
     init = input
 
     # Define trainable parameters for gamma and velocity
-    gamma = K.variable(value=np.random.rand(1,1), dtype='float32', name='gamma')
-    vel = K.variable(value=np.random.rand(1,1), dtype='float32', name='velocity')
+    # gamma = K.variable(value=np.random.rand(1,1), dtype='float32', name='gamma')
+    # vel = K.variable(value=np.random.rand(1,1), dtype='float32', name='velocity')
+    gamma = 0.9
+    vel = 0.0
 
     channel_axis = 1 if K.image_dim_ordering() == "th" else -1
 
