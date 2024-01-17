@@ -34,6 +34,7 @@ generator.fit(trainX, seed=0, augment=True)
 
 init_shape = (3, 224, 224) if K.image_dim_ordering() == 'th' else (224, 224, 3)
 
+
 # For WRN-16-8 put N = 2, k = 8
 # For WRN-28-10 put N = 4, k = 10
 # For WRN-40-4 put N = 6, k = 4
